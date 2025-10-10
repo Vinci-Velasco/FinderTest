@@ -13,6 +13,15 @@
     <maven.compiler.target>11</maven.compiler.target>
   </properties>
 
+  <dependencies>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.13.2</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
   <build>
     <plugins>
       <!-- compile -->
@@ -27,17 +36,18 @@
       </plugin>
 
       <!-- produce executable jar -->
-      <plugin>
-        <artifactId>maven-jar-plugin</artifactId>
-        <version>3.4.0</version>
-        <configuration>
-          <archive>
-            <manifest>
-              <mainClass>com.example.Vulnerable</mainClass>
-            </manifest>
-          </archive>
-        </configuration>
-      </plugin>
+    <plugin>
+      <artifactId>maven-jar-plugin</artifactId>
+      <version>3.4.0</version>
+      <configuration>
+        <archive>
+          <manifest>
+            <addClasspath>true</addClasspath>
+            <mainClass>com.example.Vulnerable</mainClass>
+          </manifest>
+        </archive>
+      </configuration>
+    </plugin>
 
       <!-- exec:java convenience (optional) -->
       <plugin>

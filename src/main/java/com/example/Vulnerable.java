@@ -1,3 +1,5 @@
+package com.example;
+
 import java.util.Scanner;
 
 // command line injection vulnerable class
