@@ -36,10 +36,6 @@ public class Vulnerable extends HttpServlet {
         Runtime.getRuntime().exec("mytool arg1 arg2 " + userRequest);
 
         resp.setContentType("text/plain");
-        try (PrintWriter w = resp.getWriter()) {
-            w.println("VULN OUTPUT:");
-            w.println(out.toString());
-        }
     }
 
     private String cookieValue(HttpServletRequest req, String name) {
