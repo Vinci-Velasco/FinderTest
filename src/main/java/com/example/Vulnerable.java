@@ -30,19 +30,10 @@ public class Vulnerable extends HttpServlet {
         // ===== VULNERABLE PATTERN (CWE-78) =====
         // Concatenate attacker-controlled input into a single command string.
         // Passing this string into Runtime.exec(String) can lead to command injection.
-        String cmd = "/usr/bin/mytool " + (userRequest == null ? "" : userRequest);
-
-        StringBuilder out = new StringBuilder();
-        try {
-            // Dangerous: using the single-string Runtime.exec overload
-            Process p = Runtime.getRuntime().exec(cmd);
-            try (BufferedReader r = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
-                String line;
-                while ((line = r.readLine()) != null) out.append(line).append("\n");
-            }
-        } catch (Exception e) {
-            out.append("error: ").append(e.getMessage());
-        }
+        String cmd = "/usr/bin/mytool " + userRequest;
+        Runtime.getRuntime().exec(cmd);
+        Runtime.getRuntime().exec("mytool arg1 arg2");
+        Runtime.getRuntime().exec("mytool arg1 arg2 " + userRequest);
 
         resp.setContentType("text/plain");
         try (PrintWriter w = resp.getWriter()) {
