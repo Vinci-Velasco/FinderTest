@@ -10,7 +10,11 @@ public class Vulnerable {
         String userInput = myObj.nextLine();
         String cmd = "./mytool --version " + userInput;
 
-        // potential sink
+        String userArg = args[0];
+
+        // potential sinks
         Runtime.getRuntime().exec(cmd);
+        Runtime.getRuntime().exec("mytool arg1 arg2");
+        Runtime.getRuntime().exec("mytool arg1 arg2 " + userArg);
     }
 }
