@@ -1,4 +1,6 @@
 // VulnerableServer.java
+package com.example;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -11,56 +13,50 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 
-public class Vulnerable {
-    public static void main(String[] args) throws Exception {
-        HttpServer server = HttpServer.create(new InetSocketAddress(8000), 0);
-        server.createContext("/run", new RunHandler());
-        server.start();
-        System.out.println("VulnerableServer listening on http://localhost:8000/run?request=...");
-    }
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.Cookie;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 
-    static class RunHandler implements HttpHandler {
-        @Override
-        public void handle(HttpExchange exchange) throws IOException {
-            URI uri = exchange.getRequestURI();
-            String query = uri.getRawQuery(); // e.g. "request=foo"
-            Map<String, String> params = parseQuery(query);
-            String userRequest = params.getOrDefault("request", "");
+public class Vulnerable extends HttpServlet {
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        String userRequest = cookieValue(req, "request");
 
-            // ===== VULNERABLE: concatenating untrusted input into a shell command =====
-            // This hands a single string to the OS command runner, which may invoke a shell.
-            String cmd = "mytool " + userRequest;
-            StringBuilder output = new StringBuilder();
-            try {
-                Process p = Runtime.getRuntime().exec(cmd);
-                try (BufferedReader r = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
-                    String line;
-                    while ((line = r.readLine()) != null) output.append(line).append("\n");
-                }
-            } catch (Exception e) {
-                output.append("error: ").append(e.getMessage());
+        // ===== VULNERABLE PATTERN (CWE-78) =====
+        // Concatenate attacker-controlled input into a single command string.
+        // Passing this string into Runtime.exec(String) can lead to command injection.
+        String cmd = "/usr/bin/mytool " + (userRequest == null ? "" : userRequest);
+
+        StringBuilder out = new StringBuilder();
+        try {
+            // Dangerous: using the single-string Runtime.exec overload
+            Process p = Runtime.getRuntime().exec(cmd);
+            try (BufferedReader r = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
+                String line;
+                while ((line = r.readLine()) != null) out.append(line).append("\n");
             }
+        } catch (Exception e) {
+            out.append("error: ").append(e.getMessage());
+        }
 
-            byte[] resp = output.toString().getBytes();
-            exchange.sendResponseHeaders(200, resp.length);
-            try (OutputStream os = exchange.getResponseBody()) {
-                os.write(resp);
-            }
+        resp.setContentType("text/plain");
+        try (PrintWriter w = resp.getWriter()) {
+            w.println("VULN OUTPUT:");
+            w.println(out.toString());
         }
     }
 
-    // Very small query parser (does not decode '+' or %-encoding; fine for demo)
-    private static Map<String, String> parseQuery(String q) {
-        if (q == null || q.isEmpty()) return Map.of();
-        return Map.ofEntries(
-            java.util.Arrays.stream(q.split("&"))
-                .map(s -> {
-                    String[] kv = s.split("=", 2);
-                    String k = kv[0];
-                    String v = kv.length > 1 ? kv[1] : "";
-                    return Map.entry(k, v);
-                })
-                .toArray(Map.Entry[]::new)
-        );
+    private String cookieValue(HttpServletRequest req, String name) {
+        Cookie[] cookies = req.getCookies(); // <-- your requested API
+        if (cookies == null) return null;
+        for (Cookie c : cookies) {
+            if (name.equals(c.getName())) return c.getValue();
+        }
+        return null;
     }
 }

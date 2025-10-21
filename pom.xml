@@ -20,6 +20,27 @@
       <version>4.13.2</version>
       <scope>test</scope>
     </dependency>
+
+    <!-- Jetty 9.x (provides javax.servlet APIs) -->
+    <dependency>
+      <groupId>org.eclipse.jetty</groupId>
+      <artifactId>jetty-server</artifactId>
+      <version>9.4.50.v20221201</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.eclipse.jetty</groupId>
+      <artifactId>jetty-servlet</artifactId>
+      <version>9.4.50.v20221201</version>
+    </dependency>
+
+    <!-- Optional simple logging for Jetty console output -->
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-simple</artifactId>
+      <version>1.7.36</version>
+      <scope>runtime</scope>
+    </dependency>
   </dependencies>
 
   <build>
@@ -36,18 +57,19 @@
       </plugin>
 
       <!-- produce executable jar -->
-    <plugin>
-      <artifactId>maven-jar-plugin</artifactId>
-      <version>3.2.2</version>
-      <configuration>
-        <archive>
-          <manifest>
-            <addClasspath>true</addClasspath>
-            <mainClass>com.example.Vulnerable</mainClass>
-          </manifest>
-        </archive>
-      </configuration>
-    </plugin>
+      <plugin>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>3.2.2</version>
+        <configuration>
+          <archive>
+            <manifest>
+              <addClasspath>true</addClasspath>
+              <!-- point the jar main to the embedded server starter -->
+              <mainClass>com.example.EmbeddedServer</mainClass>
+            </manifest>
+          </archive>
+        </configuration>
+      </plugin>
 
       <!-- exec:java convenience (optional) -->
       <plugin>
@@ -55,7 +77,8 @@
         <artifactId>exec-maven-plugin</artifactId>
         <version>3.1.0</version>
         <configuration>
-          <mainClass>com.example.Vulnerable</mainClass>
+          <!-- run the embedded Jetty starter -->
+          <mainClass>com.example.EmbeddedServer</mainClass>
         </configuration>
       </plugin>
     </plugins>
